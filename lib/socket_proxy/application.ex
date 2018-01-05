@@ -15,7 +15,7 @@ defmodule SocketProxy.Application do
     else
       [
         {SocketProxy.Dispatcher, []},
-        {SocketProxy.Listener, [port: listen_port, dispatcher_fn: &SocketProxy.Dispatcher.new_data/1]},
+        {SocketProxy.Listener, [port: listen_port]},
       ] ++ supervisor_spec_for_destinations(destinations)
     end
 
@@ -27,7 +27,7 @@ defmodule SocketProxy.Application do
     destinations
     |> Enum.with_index
     |> Enum.map(fn {dst, i} ->
-      Supervisor.child_spec({SocketProxy.Sender, dst}, id: :"socket_proxy_sender_#{i}")
+      Supervisor.child_spec({SocketProxy.Sender, ip_port: dst}, id: :"socket_proxy_sender_#{i}")
     end)
   end
 end

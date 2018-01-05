@@ -16,8 +16,8 @@ defmodule SocketProxy.Listener do
   end
 
   def init(args) do
-    dispatcher_fn = Keyword.fetch!(args, :dispatcher_fn)
     port = Keyword.fetch!(args, :port)
+    dispatcher_fn = Keyword.get(args, :dispatcher_fn, &SocketProxy.Dispatcher.new_data/1)
 
     Logger.info("Starting SocketProxy.Listener on port #{port}")
     {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: :once, packet: :raw, backlog: 1])

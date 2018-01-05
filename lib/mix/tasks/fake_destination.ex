@@ -6,7 +6,7 @@ defmodule Mix.Tasks.FakeDestination do
     {opts, _, _} = OptionParser.parse(args, switches: [port: :integer])
     port = opts[:port]
 
-    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: false])
+    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: false, reuseaddr: true])
     Logger.info("Listening on port #{port}")
     {:ok, sock} = :gen_tcp.accept(lsock)
     do_receive(sock)

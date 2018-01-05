@@ -8,24 +8,26 @@ defmodule SocketProxy.Sender do
 
   @max_buffer 500
 
-  def start_link(ip_port) do
-    GenServer.start_link(SocketProxy.Sender, ip_port)
+  def start_link(args) do
+    GenServer.start_link(SocketProxy.Sender, args)
   end
 
-  def init(ip_port) do
+  def init(args) do
+    ip_port = Keyword.fetch!(args, :ip_port)
+    dispatcher_fn = Keyword.get(args, :dispatcher_fn, &SocketProxy.Dispatcher.register/1)
     {host, port} = parse_ip_port(ip_port)
     Logger.info("Starting SocketProxy.Sender with host #{inspect(host)} and port #{port}")
-    SocketProxy.Dispatcher.register(self())
+    dispatcher_fn.(self())
     schedule_connect(200)
     {:ok, %State{host: host, port: port, buffer: []}}
   end
 
   def handle_info(:try_connect, %{host: host, port: port} = state) do
     Logger.info("SocketProxy.Sender trying to connect to #{inspect(host)}:#{port}")
-    case :gen_tcp.connect(host, port, [active: false, packet: :raw, send_timeout: 5_000], 1_000) do
+    case :gen_tcp.connect(host, port, [active: true, packet: :raw, send_timeout: 2_000], 1_000) do
       {:ok, socket} ->
         Logger.info("Connected to #{inspect(host)}:#{port}")
-        schedule_send(1000)
+        schedule_send(200)
         {:noreply, %{state | socket: socket }}
       {:error, reason} ->
         Logger.warn("Could not connect to destination #{inspect(host)}:#{port} because: #{inspect(reason)}. Will try again.")
@@ -56,6 +58,13 @@ defmodule SocketProxy.Sender do
         schedule_connect(1_000)
         {:noreply, %{state | socket: nil}}
     end
+  end
+
+  def handle_info({:tcp_closed, _port}, %{socket: socket} = state) do
+    schedule_connect(1_000)
+    Logger.warn("Socket closed. Will try to reconnect")
+    :ok = :gen_tcp.close(socket)
+    {:noreply, %{state | socket: nil}}
   end
 
   defp parse_ip_port(ip_port) do
