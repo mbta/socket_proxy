@@ -19,7 +19,7 @@ defmodule SocketProxy.Application do
       ] ++ supervisor_spec_for_destinations(destinations)
     end
 
-    opts = [strategy: :one_for_one, name: SocketProxy.Supervisor]
+    opts = [strategy: :one_for_all, name: SocketProxy.Supervisor]
     Supervisor.start_link(children, opts)
   end
 

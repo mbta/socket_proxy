@@ -15,19 +15,19 @@ defmodule SocketProxy.Dispatcher do
     GenServer.call(pid, {:new_data, data})
   end
 
-  def register(pid \\ __MODULE__, socket) do
-    GenServer.call(pid, {:register, socket})
+  def register(pid \\ __MODULE__, callback_pid) do
+    GenServer.call(pid, {:register, callback_pid})
   end
 
-  def handle_call({:new_data, data}, _from, sockets) do
-    Enum.each(sockets, fn socket ->
-      send socket, {:new_data, data}
+  def handle_call({:new_data, data}, _from, callback_pids) do
+    Enum.each(callback_pids, fn callback_pid ->
+      send callback_pid, {:new_data, data}
     end)
-    {:reply, :ok, sockets}
+    {:reply, :ok, callback_pids}
   end
 
-  def handle_call({:register, socket}, _from, sockets) do
-    Logger.info("Registering socket #{inspect(socket)}")
-    {:reply, :ok, [socket | sockets]}
+  def handle_call({:register, callback_pid}, _from, callback_pids) do
+    Logger.info("Registering callback_pid #{inspect(callback_pid)}")
+    {:reply, :ok, [callback_pid | callback_pids]}
   end
 end
