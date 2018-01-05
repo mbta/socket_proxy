@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.FakeServer do
+defmodule Mix.Tasks.FakeDestination do
   use Mix.Task
   require Logger
 

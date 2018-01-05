@@ -17,8 +17,8 @@ Open several terminal windows, all in the socket_proxy directory.
 Start up a couple servers on different ports:
 
 ```
-$ mix fake_server --port 8080  # in one window
-$ mix fake_server --port 8081  # in another window
+$ mix fake_destination --port 8080  # in one window
+$ mix fake_destination --port 8081  # in another window
 ```
 
 In another terminal window, start up the source data which will attempt to listen on a port and then start sending random bytes once the connection is made.
