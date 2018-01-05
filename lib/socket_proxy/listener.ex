@@ -20,7 +20,7 @@ defmodule SocketProxy.Listener do
     port = Keyword.fetch!(args, :port)
 
     Logger.info("Starting SocketProxy.Listener on port #{port}")
-    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: :once, packet: :raw, backlog: 0])
+    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: :once, packet: :raw, backlog: 1])
     schedule_accept()
     {:ok, %State{listen_socket: lsock, port: port, dispatcher_fn: dispatcher_fn}}
   end
