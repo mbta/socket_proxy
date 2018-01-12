@@ -10,7 +10,7 @@ defmodule Mix.Tasks.FakeSource do
     port = opts[:port]
     host = {127, 0, 0, 1}
     {:ok, sock} = do_connect(host, port)
-    do_send(sock)
+    do_send(sock, host, port)
   end
 
   def do_connect(host, port) do
@@ -23,11 +23,17 @@ defmodule Mix.Tasks.FakeSource do
     end
   end
 
-  def do_send(sock) do
+  def do_send(sock, host, port) do
     data = :crypto.strong_rand_bytes(5)
     Logger.info("Sending #{inspect(data)}")
-    :ok = :gen_tcp.send(sock, data)
-    :timer.sleep(1_000)
-    do_send(sock)
+    case :gen_tcp.send(sock, data) do
+      :ok ->
+        :timer.sleep(1_000)
+        do_send(sock, host, port)
+      {:error, err} ->
+        Logger.error("Err: #{inspect(err)}")
+        :gen_tcp.close(sock)
+        do_connect(host, port)
+    end
   end
 end
