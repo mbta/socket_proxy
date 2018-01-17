@@ -1,5 +1,20 @@
 defmodule SocketProxy.Receiver do
+  use GenServer, restart: :temporary, shutdown: :brutal_kill
   require Logger
+
+  def start_link(args) do
+    GenServer.start_link(__MODULE__, args)
+  end
+
+  def init({socket, destinations}) do
+    GenServer.cast(self(), {:proxy, socket, destinations})
+    {:ok, []}
+  end
+
+  def handle_cast({:proxy, socket, destinations}, _state) do
+    proxy(socket, destinations)
+    {:stop, :proxy_dead, []}
+  end
 
   def proxy(sock, destinations) do
     destination_pids = Enum.map(destinations, fn {ip, host} ->

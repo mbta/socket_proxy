@@ -23,7 +23,7 @@ defmodule SocketProxy do
     case :gen_tcp.accept(lsock, 3_000) do
       {:ok, sock} ->
         Logger.info("Accepted socket: #{Util.format_socket(sock)}")
-        spawn fn -> SocketProxy.Receiver.proxy(sock, destinations) end
+        SocketProxy.ReceiverSupervisor.start_child({sock, destinations})
         GenServer.cast(self(), :accept)
         {:noreply, state}
       {:error, :timeout} ->

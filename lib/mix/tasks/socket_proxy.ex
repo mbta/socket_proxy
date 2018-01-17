@@ -8,12 +8,10 @@ defmodule Mix.Tasks.SocketProxy do
   def run(args) do
     {opts, ips, []} = OptionParser.parse(args, switches: [listen_port: :integer])
     destinations = Enum.map(ips, &parse_ip_port/1)
-
-    {:ok, _pid} = Supervisor.start_link([
-      {SocketProxy, {opts[:listen_port], destinations}}
-    ], strategy: :one_for_one)
-    
-    Process.sleep(:infinity)
+    Application.put_env(:socket_proxy, :listen_port, opts[:listen_port])
+    Application.put_env(:socket_proxy, :destinations, destinations)
+    {:ok, [:socket_proxy]} = Application.ensure_all_started(:socket_proxy)
+    # Process.sleep(:infinity)
   end
 
   defp parse_ip_port(ip_port) do
