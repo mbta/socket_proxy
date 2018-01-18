@@ -11,7 +11,7 @@ defmodule Mix.Tasks.SocketProxy do
     Application.put_env(:socket_proxy, :listen_port, opts[:listen_port])
     Application.put_env(:socket_proxy, :destinations, destinations)
     {:ok, [:socket_proxy]} = Application.ensure_all_started(:socket_proxy)
-    # Process.sleep(:infinity)
+    Process.sleep(:infinity)
   end
 
   defp parse_ip_port(ip_port) do

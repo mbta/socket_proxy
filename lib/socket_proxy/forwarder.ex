@@ -29,7 +29,7 @@ defmodule SocketProxy.Forwarder do
       :ok ->
         {:noreply, state}
       {:error, reason} ->
-        Logger.error("Sending socket error #{inspect(reason)} on #{Util.format_socket(state.socket)}. Reconnecting...")
+        Logger.error("SocketProxy.Forwarder send/2 error #{inspect(reason)} on #{Util.format_socket(state.socket)}. Reconnecting...")
         :gen_tcp.close(state.socket)
         send self(), :connect
         {:noreply, %{state | socket: nil}}

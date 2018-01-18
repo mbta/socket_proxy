@@ -13,7 +13,7 @@ defmodule SocketProxy do
 
   def init({port, destinations}) do
     Logger.info("Initializing Listener")
-    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: false, reuseaddr: true])
+    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: :once, reuseaddr: true])
     Logger.info("Listening on port #{port}")
     GenServer.cast(self(), :accept)
     {:ok, %{lsock: lsock, destinations: destinations}}
@@ -23,7 +23,10 @@ defmodule SocketProxy do
     case :gen_tcp.accept(lsock, 3_000) do
       {:ok, sock} ->
         Logger.info("Accepted socket: #{Util.format_socket(sock)}")
-        SocketProxy.ReceiverSupervisor.start_child({sock, destinations})
+        case SocketProxy.ReceiverSupervisor.start_child({sock, destinations}) do
+          {:ok, pid} -> :ok = :gen_tcp.controlling_process(sock, pid)
+          {:ok, pid, _info} -> :ok = :gen_tcp.controlling_process(sock, pid)
+        end
         GenServer.cast(self(), :accept)
         {:noreply, state}
       {:error, :timeout} ->
