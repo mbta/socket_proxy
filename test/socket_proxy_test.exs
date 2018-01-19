@@ -42,7 +42,7 @@ defmodule SocketProxyTest do
     # Destination dies and restarts
     :ok = GenServer.stop(dest1, :normal, 100)
     {:ok, new_dest} = GenServer.start_link(FakeDestination, 8081)
-    :timer.sleep(50)
+    :timer.sleep(3_500) # Socket Proxy tries to reconnect every 3_000
 
     # New destination receives new messages
     GenServer.call(new_src, {:send_message, "still_alive?"})
