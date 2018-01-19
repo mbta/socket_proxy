@@ -12,9 +12,9 @@ defmodule SocketProxy.Forwarder do
   end
 
   def handle_info(:connect, state) do
-    case :gen_tcp.connect(state.ip, state.host, [:binary, active: false, send_timeout: 5_000], 3_000) do
+    case :gen_tcp.connect(state.ip, state.host, [:binary, active: true, send_timeout: 5_000], 3_000) do
       {:ok, socket} ->
-        Logger.info("Connected to socket #{Util.format_socket(socket)}")
+        Logger.info("SocketProxy.Forwarder connected to socket #{Util.format_socket(socket)}")
         {:noreply, %{state | socket: socket}}
       {:error, _reason} ->
         send self(), :connect
@@ -34,6 +34,15 @@ defmodule SocketProxy.Forwarder do
         send self(), :connect
         {:noreply, %{state | socket: nil}}
     end
+  end
+  def handle_info({:tcp, _port, data}, state) do
+    Logger.info("SocketProxy.Forwarder received TCP data: #{inspect(data)}")
+    {:noreply, state}
+  end
+  def handle_info({:tcp_closed, _port}, state) do
+    Logger.warn("SocketProxy.Forwarder socket closed. Reconnecting...")
+    send self(), :connect
+    {:noreply, state}
   end
   def handle_info(msg, state) do
     Logger.error("Unknown message to sender: #{inspect(msg)}")
