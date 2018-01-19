@@ -17,7 +17,8 @@ defmodule SocketProxy.Forwarder do
         Logger.info("SocketProxy.Forwarder connected to socket #{Util.format_socket(socket)}")
         {:noreply, %{state | socket: socket}}
       {:error, _reason} ->
-        send self(), :connect
+        Logger.warn("SocketProxy.Forwarder can't connect to #{inspect({state.ip, state.host})}")
+        Process.send_after(self(), :connect, 3_000)
         {:noreply, state}
     end
   end
@@ -42,7 +43,7 @@ defmodule SocketProxy.Forwarder do
   def handle_info({:tcp_closed, _port}, state) do
     Logger.warn("SocketProxy.Forwarder socket closed. Reconnecting...")
     send self(), :connect
-    {:noreply, state}
+    {:noreply, %{state | socket: nil}}
   end
   def handle_info(msg, state) do
     Logger.error("Unknown message to sender: #{inspect(msg)}")
