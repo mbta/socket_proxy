@@ -14,20 +14,12 @@ defmodule SocketProxy.Application do
       []
     else
       [
-        {SocketProxy.Dispatcher, []},
-        {SocketProxy.Listener, [port: listen_port]},
-      ] ++ supervisor_spec_for_destinations(destinations)
+        {SocketProxy, {listen_port, destinations}},
+        {SocketProxy.ReceiverSupervisor, []}
+      ]
     end
 
     opts = [strategy: :one_for_all, name: SocketProxy.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp supervisor_spec_for_destinations(destinations) do
-    destinations
-    |> Enum.with_index
-    |> Enum.map(fn {dst, i} ->
-      Supervisor.child_spec({SocketProxy.Sender, ip_port: dst}, id: :"socket_proxy_sender_#{i}")
-    end)
   end
 end

@@ -8,8 +8,15 @@ defmodule Mix.Tasks.FakeDestination do
 
     {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: false, reuseaddr: true])
     Logger.info("Listening on port #{port}")
+    do_accept(lsock)
+  end
+
+  defp do_accept(lsock) do
     {:ok, sock} = :gen_tcp.accept(lsock)
-    do_receive(sock)
+    spawn fn ->
+      do_receive(sock)
+    end
+    do_accept(lsock)
   end
 
   defp do_receive(sock) do
