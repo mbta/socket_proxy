@@ -15,7 +15,7 @@ This app comes with a fake sources which generate random strings and fake server
 Open several terminal windows, all in the socket_proxy directory.
 
 Start up a couple servers on different ports:
-https://assets.head-hunters.org/puzzles/what_the/03-fe4a6b245f.png
+
 ```
 $ mix fake_destination --port 8080  # in one window
 $ mix fake_destination --port 8081  # in another window
