@@ -10,7 +10,7 @@ defmodule SocketProxyTest do
 
     # Start up socket proxy
     port = 8080
-    destinations = [{{127, 0, 0, 1}, 8081}, {{127, 0, 0, 1}, 8082}]
+    destinations = [{'127.0.0.1', 8081}, {'localhost', 8082}]
     Application.put_env(:socket_proxy, :listen_port, port)
     Application.put_env(:socket_proxy, :destinations, destinations)
     {:ok, _pid} = start_supervised({SocketProxy, {port, destinations}})
