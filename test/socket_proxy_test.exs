@@ -10,7 +10,7 @@ defmodule SocketProxyTest do
 
     # Start up socket proxy
     port = 8080
-    destinations = [{{127, 0, 0, 1}, 8081}, {{127, 0, 0, 1}, 8082}]
+    destinations = [{'127.0.0.1', 8081}, {'localhost', 8082}]
     Application.put_env(:socket_proxy, :listen_port, port)
     Application.put_env(:socket_proxy, :destinations, destinations)
     {:ok, _pid} = start_supervised({SocketProxy, {port, destinations}})
@@ -77,7 +77,7 @@ defmodule FakeDestination do
     {:noreply, {lsock, socks, msgs <> data}}
   end
 
-  def terminate(reason, {lsock, socks, msgs}) do
+  def terminate(_reason, {lsock, socks, _msgs}) do
     :gen_tcp.close(lsock)
     Enum.each(socks, & :gen_tcp.close(&1))
   end

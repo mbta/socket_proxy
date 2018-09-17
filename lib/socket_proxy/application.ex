@@ -40,7 +40,7 @@ defmodule SocketProxy.Application do
   defp parse_ip_port(ip_port) do
     [raw_host, raw_port] = String.split(ip_port, ":")
     port = String.to_integer(raw_port)
-    {:ok, host} = raw_host |> String.to_charlist |> :inet.parse_address
+    host = String.to_charlist(raw_host)
     {host, port}
   end
 end
