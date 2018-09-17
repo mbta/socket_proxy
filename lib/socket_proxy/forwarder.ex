@@ -2,22 +2,22 @@ defmodule SocketProxy.Forwarder do
   use GenServer
   require Logger
 
-  def start_link({ip, host}) do
-    GenServer.start_link(__MODULE__, {ip, host})
+  def start_link({ip, port}) do
+    GenServer.start_link(__MODULE__, {ip, port})
   end
 
-  def init({ip, host}) do
+  def init({ip, port}) do
     send self(), :connect
-    {:ok, %{ip: ip, host: host, socket: nil}}
+    {:ok, %{ip: ip, port: port, socket: nil}}
   end
 
   def handle_info(:connect, state) do
-    case :gen_tcp.connect(state.ip, state.host, [:binary, active: true, send_timeout: 5_000], 3_000) do
+    case :gen_tcp.connect(state.ip, state.port, [:binary, active: true, send_timeout: 5_000], 3_000) do
       {:ok, socket} ->
         Logger.info("SocketProxy.Forwarder connected to socket #{Util.format_socket(socket)}")
         {:noreply, %{state | socket: socket}}
       {:error, _reason} ->
-        Logger.warn("SocketProxy.Forwarder can't connect to #{inspect({state.ip, state.host})}")
+        Logger.warn("SocketProxy.Forwarder can't connect to #{inspect({state.ip, state.port})}")
         Process.send_after(self(), :connect, 3_000)
         {:noreply, state}
     end
