@@ -77,7 +77,7 @@ defmodule FakeDestination do
     {:noreply, {lsock, socks, msgs <> data}}
   end
 
-  def terminate(reason, {lsock, socks, msgs}) do
+  def terminate(_reason, {lsock, socks, _msgs}) do
     :gen_tcp.close(lsock)
     Enum.each(socks, & :gen_tcp.close(&1))
   end
