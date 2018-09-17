@@ -7,8 +7,8 @@ defmodule SocketProxy.Receiver do
   end
 
   def init({socket, destinations}) do
-    destination_pids = Enum.map(destinations, fn {ip, port} ->
-      {:ok, pid} = SocketProxy.Forwarder.start_link({ip, port})
+    destination_pids = Enum.map(destinations, fn {host, port} ->
+      {:ok, pid} = SocketProxy.Forwarder.start_link({host, port})
       pid
     end)
 
