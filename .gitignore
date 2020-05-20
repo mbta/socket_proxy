@@ -1,6 +1,9 @@
 # The directory Mix will write compiled artifacts to.
 /_build/
 
+# The directory we move the previously built release to as backup
+/_build-prev/
+
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
 
@@ -18,3 +21,6 @@ erl_crash.dump
 
 # Also ignore archive artifacts (built via "mix archive.build").
 *.ez
+
+# stdout is written here
+/logs/

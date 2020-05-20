@@ -4,12 +4,9 @@ use Mix.Config
 
 config :ehmon, :report_mf, {:ehmon, :info_report}
 
-config :logger, backends: [{Logger.Backend.Splunk, :splunk_log}, :console]
-config :logger, :splunk_log,
-  host: "https://http-inputs-mbta.splunkcloud.com/services/collector/event",
-  token: {:system, "SOCKET_PROXY_SPLUNK_TOKEN"},
-  format: "$dateT$time $metadata[$level] node=$node $message\n",
-  level: :info
+config :logger, backends: [:console]
+
+config :socket_proxy, :start_children?, true
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
@@ -36,4 +33,5 @@ config :logger, :splunk_log,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-#     import_config "#{Mix.env}.exs"
+
+import_config "#{Mix.env}.exs"

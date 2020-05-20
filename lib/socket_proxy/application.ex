@@ -5,9 +5,7 @@ defmodule SocketProxy.Application do
   require Logger
 
   def start(_type, _args) do
-    if Mix.env == :test do
-      Supervisor.start_link([], strategy: :one_for_all, name: SocketProxy.Supervisor)
-    else
+    if Application.get_env(:socket_proxy, :start_children?) do
       Logger.info("Starting SocketProxy.Application")
 
       listen_port = Application.get_env(:socket_proxy, :listen_port) || get_listen_port()
@@ -20,6 +18,8 @@ defmodule SocketProxy.Application do
 
       opts = [strategy: :one_for_all, name: SocketProxy.Supervisor]
       Supervisor.start_link(children, opts)
+    else
+      Supervisor.start_link([], strategy: :one_for_all, name: SocketProxy.Supervisor)
     end
   end
 

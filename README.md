@@ -45,3 +45,39 @@ The `SocketProxy` GenServer listens on a port and operates a `gen_tcp` accept lo
 When `SocketProxy` does accept a connection, it starts a `SocketProxy.Receiver` child under the `SocketProxy.ReceiverSupervisor`. This process in turn spawns *and links* a `SocketProxy.Forwarder` GenServer for each of its destinations. Incoming data is handled by the `Receiver` process, and fanned out to each destination by sending a `{:data, data}` message.
 
 Because the `Receiver` is linked to the `Forwarder`s, if any of them crash or exit, *all* of them do. This is to help manage cleanup should the Receiver fail (incoming data socket is broken). If that happens, it and all the Forwarder processes exit, and the source should re-connect to socket_proxy, which will accept it from its running accept loop, and spawn a new Receiver, which spawns new linked Forwarders, and so on.
+
+## Deploys
+
+Socket proxy runs as a Windows services on Opstech3.
+
+On Opstech3 there is a user, RTRUser where the code and compiled artifacts live. In order to access /c/Users/RTRUser/ in Git Bash, you will have to navigate to the directory in the Windows GUI Explorer. The first time you open it, it will prompt you for permissions, and then after that you'll have access via Git Bash.
+
+The version of Erlang we use is precompiled Erlang/OTP, installed via [this Windows installer](https://www.erlang-solutions.com/resources/download.html) to /c/Users/RTRUser/bin/.
+
+The version of Elixir we use is precompiled Elixir, downloaded [here](https://github.com/elixir-lang/elixir/releases) and unzipped to /c/Users/RTRUser/bin.
+
+The `socket_proxy` code is git cloned to /c/Users/RTRUser/GitHub/socket_proxy_release_prod/.
+
+We build the application via Elixir-native `mix release`, setting the `PATH` to include the aforementioned versions of Elixir and Erlang. The release gets built into `_build\prod\rel\`.
+
+To manage the Windows service we use [`nssm`](https://nssm.cc/). The service is configured via `nssm edit socket-proxy-prod`. In particular, environment variables are added there, and the app launch is configured there. The app is configured to launch as follows:
+
+* Path: `C:\Users\RTRUser\GitHub\socket_proxy_release_prod\_build\prod\rel\socket_proxy\bin\socket_proxy.bat`
+* Startup directory: `C:\Users\RTRUser\GitHub\socket_proxy_release_prod`
+* Arguments: `start`
+
+To deploy a new version of the code:
+
+1. In Git Bash, navigate to `/c/Users/RTRUser/GitHub/socket_proxy_release_prod`
+1. `git pull` the latest version
+1. Run `./build_release.sh socket_proxy_prod` to compile a new release. The second argument gives the name of the Erlang node to run the release under and isn't terribly important.
+1. Open the Windows Services application and restart `socket-proxy-prod`
+1. Tag the release in git: `git tag -a yyyy-mm-dd -m "Deployed on [date] at [time]"`
+1. Push the tag to GitHub: `git push origin yyyy-mm-dd`
+
+## Rolling back
+To quickly roll back to a previous version:
+
+1. Move the broken release: `mv _build _build-broken`
+1. Restore the previous release: `mv _build-prev _build`
+1. Restart the service
