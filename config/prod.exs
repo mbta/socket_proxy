@@ -6,4 +6,5 @@ config :logger, :splunk_log,
   host: "https://http-inputs-mbta.splunkcloud.com/services/collector/event",
   token: {:system, "SOCKET_PROXY_SPLUNK_TOKEN"},
   format: "$dateT$time $metadata[$level] node=$node $message\n",
-  level: :info
+  level: :info,
+  max_buffer: 1
