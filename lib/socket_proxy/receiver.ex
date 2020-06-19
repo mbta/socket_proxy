@@ -1,5 +1,5 @@
 defmodule SocketProxy.Receiver do
-  use GenServer, restart: :temporary
+  use GenServer
   require Logger
 
   def start_link(args) do
