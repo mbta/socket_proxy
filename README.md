@@ -60,11 +60,7 @@ The `socket_proxy` code is git cloned to /c/Users/RTRUser/GitHub/socket_proxy_re
 
 We build the application via Elixir-native `mix release`, setting the `PATH` to include the aforementioned versions of Elixir and Erlang. The release gets built into `_build\prod\rel\`.
 
-To manage the Windows service we use [`nssm`](https://nssm.cc/). The service is configured via `nssm edit socket-proxy-prod`. In particular, environment variables are added there, and the app launch is configured there. The app is configured to launch as follows:
-
-* Path: `C:\Users\RTRUser\GitHub\socket_proxy_release_prod\_build\prod\rel\socket_proxy\bin\socket_proxy.bat`
-* Startup directory: `C:\Users\RTRUser\GitHub\socket_proxy_release_prod`
-* Arguments: `start`
+To manage the Windows service we use [`WinSW 2.9`](https://github.com/winsw/winsw/releases/tag/v2.9.0). The service is configured via an XML file in `/c/Users/RTRUser/apps/`. In particular, environment variables are updated by editing the XML file. Updates should also be made to the copy of the XML file in 1Password.
 
 To deploy a new version of the code:
 
