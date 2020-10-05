@@ -33,6 +33,7 @@ defmodule SocketProxy.Mixfile do
     [
       {:ehmon, git: "https://github.com/mbta/ehmon.git"},
       {:logger_splunk_backend, github: "mbta/logger_splunk_backend"},
+      {:ranch, "~> 2.0"},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]
   end

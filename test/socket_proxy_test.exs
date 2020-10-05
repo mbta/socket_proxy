@@ -12,15 +12,8 @@ defmodule SocketProxyTest do
     destinations = [{'127.0.0.1', 8081}, {'localhost', 8082}]
     Application.put_env(:socket_proxy, :listen_port, port)
     Application.put_env(:socket_proxy, :destinations, destinations)
-    {:ok, _pid} = start_supervised({SocketProxy, {port, destinations}})
-    {:ok, rec_sup_pid} = start_supervised(SocketProxy.ReceiverSupervisor)
+    {:ok, _pid} = SocketProxy.Application.start_listener()
     :timer.sleep(50)
-
-    # ReceiverSupervisor starts child for each created source
-    [
-      {_, rec_pid_1, :worker, [SocketProxy.Receiver]},
-      {_, rec_pid_2, :worker, [SocketProxy.Receiver]}
-    ] = DynamicSupervisor.which_children(rec_sup_pid)
 
     #  Send some messages
     GenServer.call(src1, {:send_message, "src1msg1"})
@@ -38,11 +31,6 @@ defmodule SocketProxyTest do
     Process.flag :trap_exit, true
     Process.exit(src1, :shutdown)
     :timer.sleep(3_500)
-    # ReceiverSupervisor child dies when source dies
-    [
-      {_, new_rec_pid_1, :worker, [SocketProxy.Receiver]},
-    ] = DynamicSupervisor.which_children(rec_sup_pid)
-    assert Enum.member?([rec_pid_1, rec_pid_2], new_rec_pid_1)
 
     # A new source starts
     {:ok, new_src} = GenServer.start_link(FakeSource, 8080)
@@ -50,11 +38,6 @@ defmodule SocketProxyTest do
     # New source's messages arrive at destinations
     GenServer.call(new_src, {:send_message, "newmsg"})
     :timer.sleep(10)
-    # ReceiverSupervisor creates starts new child when new source starts
-    [
-      {_, ^new_rec_pid_1, :worker, [SocketProxy.Receiver]},
-      {_, _, :worker, [SocketProxy.Receiver]}
-    ] = DynamicSupervisor.which_children(rec_sup_pid)
     assert GenServer.call(dest1, :messages) =~ "newmsg"
     assert GenServer.call(dest2, :messages) =~ "newmsg"
 
