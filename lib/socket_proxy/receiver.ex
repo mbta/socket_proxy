@@ -4,20 +4,20 @@ defmodule SocketProxy.Receiver do
 
   @behaviour :ranch_protocol
 
-  defstruct socket: nil, destination_pids: []
+  defstruct socket: nil, destination_pids: [], port: nil
 
   @impl :ranch_protocol
   def start_link(ref, transport, opts) do
-    GenServer.start_link(__MODULE__, {ref, transport, opts[:destinations]})
+    GenServer.start_link(__MODULE__, {ref, transport, opts[:destinations], opts[:port]})
   end
 
   @impl GenServer
-  def init({ref, transport, destinations}) do
-    {:ok, %__MODULE__{}, {:continue, {ref, transport, destinations}}}
+  def init({ref, transport, destinations, port}) do
+    {:ok, %__MODULE__{}, {:continue, {ref, transport, destinations, port}}}
   end
 
   @impl GenServer
-  def handle_continue({ref, transport, destinations}, state) do
+  def handle_continue({ref, transport, destinations, port}, state) do
     {:ok, socket} = :ranch.handshake(ref)
     :ok = transport.setopts(socket, active: true)
 
@@ -29,7 +29,7 @@ defmodule SocketProxy.Receiver do
 
     Logger.info("Accepted socket: #{Util.format_socket(socket)}")
 
-    {:noreply, %{state | socket: socket, destination_pids: destination_pids}}
+    {:noreply, %{state | socket: socket, destination_pids: destination_pids, port: port}}
   end
 
   @impl GenServer
@@ -41,8 +41,8 @@ defmodule SocketProxy.Receiver do
     {:noreply, state}
   end
 
-  def handle_info({:tcp_closed, socket}, %{socket: socket} = state) do
-    Logger.warn("SocketProxy.Receiver tcp_closed for socket #{Util.format_socket(socket)}")
+  def handle_info({:tcp_closed, _socket}, %{port: port} = state) do
+    Logger.warn("SocketProxy.Receiver tcp_closed for socket listening on port #{port}")
 
     {:stop, :normal, state}
   end

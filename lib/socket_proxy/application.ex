@@ -23,7 +23,8 @@ defmodule SocketProxy.Application do
       :ranch_tcp,
       [{:port, listen_port}],
       SocketProxy.Receiver,
-      destinations: destinations
+      destinations: destinations,
+      port: listen_port
     )
   end
 
