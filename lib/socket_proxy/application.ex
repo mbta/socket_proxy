@@ -8,25 +8,29 @@ defmodule SocketProxy.Application do
     if Application.get_env(:socket_proxy, :start_children?) do
       Logger.info("Starting SocketProxy.Application")
 
-      listen_port = Application.get_env(:socket_proxy, :listen_port) || get_listen_port()
-      destinations = Application.get_env(:socket_proxy, :destinations) || get_destinations()
-
-      children = [
-        {SocketProxy, {listen_port, destinations}},
-        {SocketProxy.ReceiverSupervisor, []}
-      ]
-
-      opts = [strategy: :one_for_all, name: SocketProxy.Supervisor]
-      Supervisor.start_link(children, opts)
+      {:ok, _} = start_listener()
     else
-      Supervisor.start_link([], strategy: :one_for_all, name: SocketProxy.Supervisor)
+      {:ok, _} = Supervisor.start_link([], strategy: :one_for_all)
     end
+  end
+
+  def start_listener() do
+    listen_port = Application.get_env(:socket_proxy, :listen_port) || get_listen_port()
+    destinations = Application.get_env(:socket_proxy, :destinations) || get_destinations()
+
+    :ranch.start_listener(
+      make_ref(),
+      :ranch_tcp,
+      [{:port, listen_port}],
+      SocketProxy.Receiver,
+      destinations: destinations
+    )
   end
 
   defp get_listen_port do
     "SOCKET_PROXY_LISTEN_PORT"
     |> System.get_env()
-    |> String.to_integer
+    |> String.to_integer()
   end
 
   defp get_destinations do
