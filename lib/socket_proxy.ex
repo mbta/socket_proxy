@@ -25,7 +25,6 @@ defmodule SocketProxy do
         Logger.info("Accepted socket: #{Util.format_socket(sock)}")
         case SocketProxy.ReceiverSupervisor.start_child({sock, destinations}) do
           {:ok, pid} -> :ok = :gen_tcp.controlling_process(sock, pid)
-          {:ok, pid, _info} -> :ok = :gen_tcp.controlling_process(sock, pid)
         end
         GenServer.cast(self(), :accept)
         {:noreply, state}
