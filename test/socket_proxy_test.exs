@@ -28,7 +28,7 @@ defmodule SocketProxyTest do
     assert GenServer.call(dest2, :messages) == "src1msg1src1msg2src2msg1src2msg2"
 
     # Source dies
-    Process.flag :trap_exit, true
+    Process.flag(:trap_exit, true)
     Process.exit(src1, :shutdown)
     :timer.sleep(3_500)
 
@@ -44,7 +44,8 @@ defmodule SocketProxyTest do
     # Destination dies and restarts
     :ok = GenServer.stop(dest1, :normal, 100)
     {:ok, new_dest} = GenServer.start_link(FakeDestination, 8081)
-    :timer.sleep(3_500) # Socket Proxy tries to reconnect every 3_000
+    # Socket Proxy tries to reconnect every 3_000
+    :timer.sleep(3_500)
 
     # New destination receives new messages
     GenServer.call(new_src, {:send_message, "still_alive?"})
@@ -67,6 +68,7 @@ defmodule FakeDestination do
       {:ok, sock} ->
         GenServer.cast(self(), :accept)
         {:noreply, {lsock, [sock | socks], messages}}
+
       {:error, :timeout} ->
         GenServer.cast(self(), :accept)
         {:noreply, state}
@@ -85,7 +87,7 @@ defmodule FakeDestination do
 
   def terminate(_reason, {lsock, socks, _msgs}) do
     :gen_tcp.close(lsock)
-    Enum.each(socks, & :gen_tcp.close(&1))
+    Enum.each(socks, &:gen_tcp.close(&1))
   end
 end
 
@@ -109,7 +111,9 @@ defmodule FakeSource do
 
   defp connect(port) do
     case :gen_tcp.connect({127, 0, 0, 1}, port, [:binary, active: true, reuseaddr: true]) do
-      {:ok, socket} -> {:ok, socket}
+      {:ok, socket} ->
+        {:ok, socket}
+
       _ ->
         :timer.sleep(10)
         connect(port)

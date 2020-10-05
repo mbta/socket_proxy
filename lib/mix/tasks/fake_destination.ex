@@ -13,9 +13,11 @@ defmodule Mix.Tasks.FakeDestination do
 
   defp do_accept(lsock) do
     {:ok, sock} = :gen_tcp.accept(lsock)
-    spawn fn ->
+
+    spawn(fn ->
       do_receive(sock)
-    end
+    end)
+
     do_accept(lsock)
   end
 
@@ -24,6 +26,7 @@ defmodule Mix.Tasks.FakeDestination do
       {:ok, data} ->
         Logger.info("Received: #{inspect(data)}")
         do_receive(sock)
+
       {:error, err} ->
         Logger.error("Error: #{inspect(err)}")
     end
