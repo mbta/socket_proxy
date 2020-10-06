@@ -41,8 +41,13 @@ defmodule SocketProxy.Receiver do
     {:noreply, state}
   end
 
-  def handle_info({:tcp_closed, _socket}, %{port: port} = state) do
+  def handle_info(
+        {:tcp_closed, _socket},
+        %{port: port, destination_pids: destination_pids} = state
+      ) do
     Logger.warn("SocketProxy.Receiver tcp_closed for socket listening on port #{port}")
+
+    Enum.each(destination_pids, &send(&1, :receiver_closed))
 
     {:stop, :normal, state}
   end
