@@ -62,6 +62,12 @@ defmodule SocketProxy.Forwarder do
     {:noreply, %{state | socket: nil}}
   end
 
+  def handle_info(:receiver_closed, state) do
+    Logger.info("SocketProxy.Forwarder receiver closed. Terminating...")
+    :gen_tcp.close(state.socket)
+    {:stop, :normal, state}
+  end
+
   def handle_info(msg, state) do
     Logger.error("Unknown message to sender: #{inspect(msg)}")
     {:noreply, state}
