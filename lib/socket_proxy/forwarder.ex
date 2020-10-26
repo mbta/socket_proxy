@@ -19,7 +19,12 @@ defmodule SocketProxy.Forwarder do
            3_000
          ) do
       {:ok, socket} ->
-        Logger.info("SocketProxy.Forwarder connected to socket #{Util.format_socket(socket)}")
+        Logger.info(
+          "SocketProxy.Forwarder connected to socket #{Util.format_socket(socket)} pid=#{
+            inspect(self())
+          }"
+        )
+
         {:noreply, %{state | socket: socket}}
 
       {:error, _reason} ->
@@ -57,7 +62,7 @@ defmodule SocketProxy.Forwarder do
   end
 
   def handle_info({:tcp_closed, _port}, state) do
-    Logger.warn("SocketProxy.Forwarder socket closed. Reconnecting...")
+    Logger.warn("SocketProxy.Forwarder socket closed. Reconnecting... pid=#{inspect(self())}")
     send(self(), :connect)
     {:noreply, %{state | socket: nil}}
   end
