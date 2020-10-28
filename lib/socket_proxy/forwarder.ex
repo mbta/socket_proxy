@@ -12,6 +12,14 @@ defmodule SocketProxy.Forwarder do
   end
 
   def handle_info(:connect, state) do
+    # always close the socket, zero it out in the state, before connecting
+    # to prevent a socket leak
+    if state.socket do
+      :ok = :gen_tcp.close(state.socket)
+    end
+
+    state = %{state | socket: nil}
+
     case :gen_tcp.connect(
            state.host,
            state.port,
@@ -50,9 +58,8 @@ defmodule SocketProxy.Forwarder do
           } port=#{inspect(state.socket)} pid=#{inspect(self())}. Reconnecting..."
         )
 
-        :gen_tcp.close(state.socket)
         send(self(), :connect)
-        {:noreply, %{state | socket: nil}}
+        {:noreply, state}
     end
   end
 
@@ -67,12 +74,13 @@ defmodule SocketProxy.Forwarder do
     )
 
     send(self(), :connect)
-    {:noreply, %{state | socket: nil}}
+    {:noreply, state}
   end
 
   def handle_info(:receiver_closed, state) do
     Logger.info("SocketProxy.Forwarder receiver closed. Terminating...")
     :gen_tcp.close(state.socket)
+    state = %{state | socket: nil}
     {:stop, :normal, state}
   end
 
