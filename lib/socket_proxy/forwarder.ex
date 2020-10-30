@@ -8,7 +8,7 @@ defmodule SocketProxy.Forwarder do
 
   def init({host, port}) do
     send(self(), :connect)
-    {:ok, %{host: host, port: port, socket: nil}}
+    {:ok, %{host: host, port: port, socket: nil, sent: 0}}
   end
 
   def handle_info(:connect, state) do
@@ -18,7 +18,7 @@ defmodule SocketProxy.Forwarder do
       :ok = :gen_tcp.close(state.socket)
     end
 
-    state = %{state | socket: nil}
+    state = %{state | socket: nil, sent: 0}
 
     case :gen_tcp.connect(
            state.host,
@@ -49,7 +49,7 @@ defmodule SocketProxy.Forwarder do
   def handle_info({:data, data}, state) do
     case :gen_tcp.send(state.socket, data) do
       :ok ->
-        {:noreply, state}
+        {:noreply, %{state | sent: state.sent + 1}}
 
       {:error, reason} ->
         Logger.error(
@@ -70,7 +70,9 @@ defmodule SocketProxy.Forwarder do
 
   def handle_info({:tcp_closed, _port}, state) do
     Logger.warn(
-      "SocketProxy.Forwarder socket closed. port=#{inspect(state.socket)} pid=#{inspect(self())} Reconnecting..."
+      "SocketProxy.Forwarder socket closed. port=#{inspect(state.socket)} pid=#{inspect(self())} sent=#{
+        state.sent
+      } Reconnecting..."
     )
 
     send(self(), :connect)
