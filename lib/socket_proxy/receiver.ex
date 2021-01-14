@@ -4,7 +4,12 @@ defmodule SocketProxy.Receiver do
 
   @behaviour :ranch_protocol
 
-  defstruct socket: nil, destination_pids: [], port: nil
+  @staleness_check_interval_ms Application.compile_env(
+                                 :socket_proxy,
+                                 :staleness_check_interval_ms
+                               )
+
+  defstruct socket: nil, destination_pids: [], port: nil, received: 0
 
   @impl :ranch_protocol
   def start_link(ref, transport, opts) do
@@ -13,6 +18,8 @@ defmodule SocketProxy.Receiver do
 
   @impl GenServer
   def init({ref, transport, destinations, port}) do
+    :timer.send_interval(@staleness_check_interval_ms, :staleness_check)
+
     {:ok, %__MODULE__{}, {:continue, {ref, transport, destinations, port}}}
   end
 
@@ -35,25 +42,45 @@ defmodule SocketProxy.Receiver do
   @impl GenServer
   def handle_info(
         {:tcp, socket, data},
-        %{socket: socket, destination_pids: destination_pids} = state
+        %{socket: socket, destination_pids: destination_pids, received: received} = state
       ) do
     Enum.each(destination_pids, &send(&1, {:data, data}))
-    {:noreply, state}
+    {:noreply, %{state | received: received + 1}}
   end
 
   def handle_info(
         {:tcp_closed, _socket},
         %{port: port, destination_pids: destination_pids} = state
       ) do
-    Logger.warn("SocketProxy.Receiver tcp_closed for socket listening on port #{port}")
+    Logger.warn("#{__MODULE__} tcp_closed for socket listening on port #{port}")
 
     Enum.each(destination_pids, &send(&1, :receiver_closed))
 
     {:stop, :normal, state}
   end
 
+  def handle_info(
+        :staleness_check,
+        %{destination_pids: destination_pids, received: 0} = state
+      ) do
+    Logger.warn("#{__MODULE__} received no messages, terminating pid=#{inspect(self())}")
+
+    Enum.each(destination_pids, &send(&1, :receiver_closed))
+
+    {:stop, :normal, state}
+  end
+
+  def handle_info(
+        :staleness_check,
+        %{received: received} = state
+      ) do
+    Logger.info("#{__MODULE__} pid=#{inspect(self())} received=#{received}")
+
+    {:noreply, %{state | received: 0}}
+  end
+
   def handle_info(msg, state) do
-    Logger.info("SocketProxy.Receiver unknown message: #{inspect(msg)}")
+    Logger.info("#{__MODULE__} unknown message: #{inspect(msg)}")
     {:noreply, state}
   end
 end
