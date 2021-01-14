@@ -1,5 +1,6 @@
 defmodule SocketProxyTest do
   use ExUnit.Case
+  import ExUnit.CaptureLog
 
   test "the whole system works" do
     # Start up sources and destinations
@@ -51,6 +52,14 @@ defmodule SocketProxyTest do
     GenServer.call(new_src, {:send_message, "still_alive?"})
     :timer.sleep(10)
     assert GenServer.call(new_dest, :messages) == "still_alive?"
+
+    # No messages are received over a certain period
+    log =
+      capture_log([level: :warn], fn ->
+        :timer.sleep(6_500)
+      end)
+
+    assert log =~ "received no messages, terminating"
   end
 end
 

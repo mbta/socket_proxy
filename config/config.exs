@@ -6,7 +6,9 @@ config :ehmon, :report_mf, {:ehmon, :info_report}
 
 config :logger, backends: [:console]
 
-config :socket_proxy, :start_children?, true
+config :socket_proxy,
+  start_children?: true,
+  staleness_check_interval_ms: 30 * 60 * 1_000
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
